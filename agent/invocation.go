@@ -545,9 +545,9 @@ func (inv *Invocation) GetState(key string) (any, bool) {
 	return value, ok
 }
 
-// DeleteState removes a value from the invocation state.
+// DeleteState 从调用状态中删除一个值。
 //
-// Example:
+// 例子：
 //
 //	inv.DeleteState("agent:start_time")
 //	inv.DeleteState("tool:calculator:call_abc123:start_time")
@@ -563,14 +563,14 @@ func (inv *Invocation) DeleteState(key string) {
 	}
 }
 
-// AddNoticeChannelAndWait add notice channel and wait it complete
+// AddNoticeChannelAndWait 添加通知通道并等待完成
 func (inv *Invocation) AddNoticeChannelAndWait(ctx context.Context, key string, timeout time.Duration) error {
 	ch := inv.AddNoticeChannel(ctx, key)
 	if ch == nil {
 		return fmt.Errorf("notice channel create failed for %s", key)
 	}
 	if timeout == WaitNoticeWithoutTimeout {
-		// no timeout, maybe wait for ever
+		// 没有超时，也许永远等待
 		select {
 		case <-ch:
 		case <-ctx.Done():
@@ -589,7 +589,7 @@ func (inv *Invocation) AddNoticeChannelAndWait(ctx context.Context, key string, 
 	return nil
 }
 
-// AddNoticeChannel add a new notice channel
+// AddNoticeChannel 添加新的通知通道
 func (inv *Invocation) AddNoticeChannel(ctx context.Context, key string) chan any {
 	if inv == nil || inv.noticeMu == nil {
 		log.Error("noticeMu is uninitialized, please use agent.NewInvocation or Clone method to create Invocation")
@@ -611,7 +611,7 @@ func (inv *Invocation) AddNoticeChannel(ctx context.Context, key string) chan an
 	return ch
 }
 
-// NotifyCompletion notify completion signal to waiting task
+// NotifyCompletion 向等待任务通知完成信号
 func (inv *Invocation) NotifyCompletion(ctx context.Context, key string) error {
 	if inv == nil || inv.noticeMu == nil {
 		log.Error("noticeMu is uninitialized, please use agent.NewInvocation or Clone method to create Invocation")
@@ -631,9 +631,9 @@ func (inv *Invocation) NotifyCompletion(ctx context.Context, key string) error {
 	return nil
 }
 
-// CleanupNotice cleanup all notice channel
-// The 'Invocation' instance created via the NewInvocation method ​​should be disposed​​
-// upon completion to prevent resource leaks.
+// CleanupNotice 清理所有通知通道
+// 应处置通过 NewInvocation 方法创建的“调用”实例
+// 完成后防止资源泄漏。
 func (inv *Invocation) CleanupNotice(ctx context.Context) {
 	if inv == nil || inv.noticeMu == nil {
 		log.Error("noticeMu is uninitialized, please use agent.NewInvocation or Clone method to create Invocation")
@@ -648,15 +648,15 @@ func (inv *Invocation) CleanupNotice(ctx context.Context) {
 	inv.noticeChanMap = nil
 }
 
-// GetCustomAgentConfig retrieves configuration for a specific custom agent type.
+// GetCustomAgentConfig 检索特定自定义 agent 类型的配置。
 //
-// Parameters:
-//   - agentKey: The agent type identifier (typically the agent's RunOptionKey constant)
+// 参数：
+// - agentKey：agent 类型标识符（通常是代理的 RunOptionKey 常量）
 //
-// Returns:
-//   - The configuration value if found, nil otherwise
+// 返回：
+// - 如果找到则配置值，否则为零
 //
-// Usage:
+// 用法：
 //
 //	func (a *CustomLLMAgent) Run(ctx context.Context, inv *agent.Invocation) (<-chan *event.Event, error) {
 //	    config := inv.GetCustomAgentConfig(RunOptionKey)
@@ -666,7 +666,7 @@ func (inv *Invocation) CleanupNotice(ctx context.Context) {
 //	    }
 //	}
 //
-// Note: The returned config should be treated as read-only. Do not modify it.
+// 注意：返回的配置应被视为只读。不要修改它。
 func (inv *Invocation) GetCustomAgentConfig(agentKey string) any {
 	if inv == nil || inv.RunOptions.CustomAgentConfigs == nil {
 		return nil
