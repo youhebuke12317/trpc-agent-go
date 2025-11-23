@@ -50,52 +50,51 @@ type TransferInfo struct {
 	Message string
 }
 
-// Invocation represents the context for a flow execution.
+// Invocation 代表流程执行的上下文。
 type Invocation struct {
-	// Agent is the agent that is being invoked.
+	// Agent 是正在被调用的代理。
 	Agent Agent
-	// AgentName is the name of the agent that is being invoked.
+	// AgentName 是正在被调用的代理的名称。
 	AgentName string
-	// InvocationID is the ID of the invocation.
+	// InvocationID 是调用的ID。
 	InvocationID string
-	// Branch records agent execution chain information.
-	// In multi-agent mode, this is useful for tracing agent execution trajectories.
+	// Branch 记录代理执行链信息。在多代理模式下，这对于追踪代理执行轨迹很有用。
 	Branch string
-	// EndInvocation is a flag that indicates if the invocation is complete.
+	// EndInvocation 是一个标志，指示调用是否完成。
 	EndInvocation bool
-	// Session is the session that is being used for the invocation.
+	// Session 是用于调用的会话。
 	Session *session.Session
-	// Model is the model that is being used for the invocation.
+	// Model 是用于调用的模型。
 	Model model.Model
-	// Message is the message that is being sent to the agent.
+	// Message 是发送给代理的消息。
 	Message model.Message
-	// RunOptions is the options for the Run method.
+	// RunOptions 是 Run 方法的选项。
 	RunOptions RunOptions
-	// TransferInfo contains information about a pending agent transfer.
+	// TransferInfo 是关于待处理代理转移的信息。
 	TransferInfo *TransferInfo
 
-	// StructuredOutput defines how the model should produce structured output for this invocation.
+	// StructuredOutput 定义模型应如何为此调用生成结构化输出。
 	StructuredOutput *model.StructuredOutput
-	// StructuredOutputType is the Go type to unmarshal the final JSON into.
+	// StructuredOutputType 是用于解包最终 JSON 的 Go 类型。
 	StructuredOutputType reflect.Type
 
-	// MemoryService is the service for managing memory.
+	// MemoryService 是用于管理内存的服务。
 	MemoryService memory.Service
-	// ArtifactService is the service for managing artifacts.
+	// ArtifactService 是用于管理工件的服务。
 	ArtifactService artifact.Service
 
-	// noticeChanMap is used to signal when events are written to the session.
+	// noticeChanMap 是用于在会话写入事件时发出信号的映射。
 	noticeChanMap map[string]chan any
 	noticeMu      *sync.Mutex
 
-	// eventFilterKey is used to filter events for flow or agent
+	// eventFilterKey 用于过滤 flow 或 agent 的事件
 	eventFilterKey string
 
-	// parent is the parent invocation, if any
+	// parent 是父级调用（如果有）
 	parent *Invocation
 
-	// state stores invocation-scoped state data (lazy initialized).
-	// Can be used by callbacks, middleware, or any invocation-scoped logic.
+	// state 存储调用范围的状态数据（延迟初始化）。
+	// 可由回调、中间件或任何调用范围的逻辑使用。
 	state   map[string]any
 	stateMu sync.RWMutex
 }
@@ -304,16 +303,21 @@ func WithCustomAgentConfigs(configs map[string]any) RunOption {
 }
 
 // RunOptions is the options for the Run method.
+// RunOptions 是 Run 方法的选项。
 type RunOptions struct {
 	// RuntimeState contains key-value pairs that will be merged into the initial state
 	// for this specific run. This allows callers to pass dynamic parameters
 	// (e.g., room ID, user context) without modifying the agent's base initial state.
+	// RuntimeState 包含将合并到此特定运行的初始状态的键值对。这允许调用者传递动态参数（例如，房间 ID、
+	// 用户上下文），而无需修改代理的基本初始状态
 	RuntimeState map[string]any
 
 	// KnowledgeFilter contains metadata key-value pairs for the knowledge filter
+	// KnowledgeFilter 包含知识过滤器的元数据键值对
 	KnowledgeFilter map[string]any
 
 	// KnowledgeConditionedFilter contains complex condition filter for the knowledge search
+	// KnowledgeConditionedFilter 包含用于知识搜索的复杂条件过滤器
 	KnowledgeConditionedFilter *searchfilter.UniversalFilterCondition
 
 	// Messages allows callers to provide a full conversation history to Runner.
@@ -321,57 +325,60 @@ type RunOptions struct {
 	// then rely on Session events for subsequent turns. The content processor
 	// ignores this field and reads only from Session events (or falls back to
 	// `invocation.Message` when no events exist).
+	// Messages 允许调用者提供完整的会话历史记录给 Runner。Runner 将自动使用此历史记录初始化一个空 Session，
+	// 然后依赖 Session 事件进行后续的回合。内容处理器会忽略此字段，并仅从 Session 事件（或当没有事件时回退到
+	// `invocation.Message`）中读取。
 	Messages []model.Message
 
-	// RequestID is the request id of the request.
+	// RequestID 是请求的请求id。
 	RequestID string
 
-	// A2ARequestOptions contains A2A client request options that will be passed to
-	// A2A agent's SendMessage and StreamMessage calls. This allows callers to pass
-	// dynamic HTTP headers or other request-specific options for each run.
+	// A2ARequestOptions 包含将传递给的 A2A 客户端请求选项
+	// A2A 代理的 SendMessage 和 StreamMessage 调用。这允许调用者通过
+	// 每次运行的动态 HTTP 标头或其他特定于请求的选项。
 	//
-	// Note: This field uses any type to avoid direct dependency on trpc-a2a-go/client package.
-	// Users should pass client.RequestOption values (e.g., client.WithRequestHeader).
-	// The a2aagent package will validate the option types at runtime.
+	// 注意：该字段使用任意类型以避免直接依赖 trpc-a2a-go/client 包。
+	// 用户应该传递 client.RequestOption 值（例如 client.WithRequestHeader）。
+	// a2aagent 包将在运行时验证选项类型。
 	A2ARequestOptions []any
 
-	// CustomAgentConfigs stores configurations for custom agents.
-	// Key: agent type, Value: agent-specific config.
+	// CustomAgentConfigs 存储自定义 agent 的配置。
+	// key：agent 类型，value：特定于agent 的配置。
 	CustomAgentConfigs map[string]any
 
-	// Model is the model to use for this specific run.
-	// If set, it temporarily overrides the agent's default model for this request only.
-	// This allows per-request model switching without affecting other concurrent requests.
+	// Model 是用于此特定运行的模型。
+	// 如果设置，它将暂时覆盖此请求的代理默认模型。
+	// 这允许按请求进行模型切换，而不会影响其他并发请求。
 	Model model.Model
 
-	// ModelName is the name of the model to use for this specific run.
-	// The agent will look up the model by name from its registered models.
-	// If both Model and ModelName are set, Model takes precedence.
+	// ModelName 是用于此特定运行的模型名称。
+	// 代理将从其注册的模型中通过名称查找模型。
+	// 如果同时设置了 Model 和 ModelName，Model 优先。
 	ModelName string
 
-	// ToolFilter is a custom function to filter tools for this run.
-	// If set, only tools for which the filter returns true will be available to the model.
-	// If nil, all registered tools will be available (default behavior).
+	// ToolFilter 是一个自定义函数，用于过滤本次运行的工具。
+	// 如果设置，则只有过滤器返回 true 的工具才可用于模型。
+	// 如果为零，则所有注册的工具都将可用（默认行为）。
 	//
-	// The filter function receives:
-	//   - ctx: The context with invocation information (use agent.InvocationFromContext)
-	//   - tool: The tool being filtered
+	// 过滤函数接收：
+	// - ctx：带有调用信息的上下文（使用agent.InitationFromContext）
+	// - tool: 被过滤的工具
 	//
-	// This filtering happens at the request preparation stage, before sending to the model.
-	// The model will only see the tool descriptions for tools that pass the filter.
+	// 此过滤发生在发送到模型之前的请求准备阶段。
+	// 模型只会看到通过过滤器的工具的工具描述。
 	//
-	// Note: Framework tools (knowledge_search, transfer_to_agent) are never filtered
-	// and will always be included regardless of the filter function's return value.
+	// 注意：框架工具（knowledge_search、transfer_to_agent）永远不会被过滤
+	// 无论过滤器函数的返回值如何，都将始终包含在内。
 	//
-	// Example:
-	//   agent.WithToolFilter(tool.NewIncludeToolNamesFilter("calculator", "time_tool"))
-	//   agent.WithToolFilter(func(ctx context.Context, t tool.Tool) bool {
-	//       return t.Declaration().Name == "calculator"
-	//   })
+	// 示例：
+	// agent.WithToolFilter(tool.NewIncludeToolNamesFilter("calculator", "time_tool"))
+	// agent.WithToolFilter(func(ctx context.Context, t tool.Tool) bool {
+	// 返回 t.Declaration().Name == "calculator"
+	// })
 	ToolFilter tool.FilterFunc
 }
 
-// NewInvocation create a new invocation
+// NewInvocation 创建一个新的 Invocation。
 func NewInvocation(invocationOpts ...InvocationOptions) *Invocation {
 	inv := &Invocation{
 		InvocationID:  uuid.NewString(),
@@ -433,7 +440,7 @@ func (inv *Invocation) Clone(invocationOpts ...InvocationOptions) *Invocation {
 	return newInv
 }
 
-// GetEventFilterKey get event filter key.
+// GetEventFilterKey 获取事件过滤器键。
 func (inv *Invocation) GetEventFilterKey() string {
 	if inv == nil {
 		return ""
@@ -441,7 +448,7 @@ func (inv *Invocation) GetEventFilterKey() string {
 	return inv.eventFilterKey
 }
 
-// InjectIntoEvent inject invocation information into event.
+// InjectIntoEvent 将调用信息注入到事件中
 func InjectIntoEvent(inv *Invocation, e *event.Event) {
 	if e == nil || inv == nil {
 		return
@@ -456,7 +463,7 @@ func InjectIntoEvent(inv *Invocation, e *event.Event) {
 	e.FilterKey = inv.GetEventFilterKey()
 }
 
-// EmitEvent inject invocation information into event and emit it to channel.
+// EmitEvent 将调用信息注入事件并将其发送到通道。
 func EmitEvent(ctx context.Context, inv *Invocation, ch chan<- *event.Event,
 	e *event.Event) error {
 	if ch == nil || e == nil {
@@ -473,26 +480,26 @@ func EmitEvent(ctx context.Context, inv *Invocation, ch chan<- *event.Event,
 	return event.EmitEvent(ctx, ch, e)
 }
 
-// GetAppendEventNoticeKey get append event notice key.
+// GetAppendEventNoticeKey 获取追加事件通知键。
 func GetAppendEventNoticeKey(eventID string) string {
 	return AppendEventNoticeKeyPrefix + eventID
 }
 
-// SetState sets a value in the invocation state.
+// SetState 在调用状态中设置一个值。
 //
-// This is a general-purpose key-value store scoped to the invocation lifecycle.
-// It can be used by callbacks, middleware, or any invocation-scoped logic.
+// 这是一个适用于调用生命周期的通用键值存储。
+// 它可以由回调、中间件或任何调用范围的逻辑使用。
 //
-// Recommended key naming conventions:
+// 推荐的键命名约定：
 //   - Agent callbacks: "agent:xxx" (e.g., "agent:start_time")
 //   - Model callbacks: "model:xxx" (e.g., "model:start_time")
 //   - Tool callbacks: "tool:<toolName>:<toolCallID>:xxx" (e.g., "tool:calculator:call_abc123:start_time")
 //   - Middleware: "middleware:xxx" (e.g., "middleware:request_id")
 //   - Custom logic: "custom:xxx" (e.g., "custom:user_context")
 //
-// Note: Tool callbacks should include tool call ID to support concurrent calls.
+// 注意：工具回调应包含工具调用 ID 以支持并发调用。
 //
-// Example:
+// 例子：
 //
 //	inv.SetState("agent:start_time", time.Now())
 //	inv.SetState("model:start_time", time.Now())
@@ -512,11 +519,11 @@ func (inv *Invocation) SetState(key string, value any) {
 	inv.state[key] = value
 }
 
-// GetState retrieves a value from the invocation state.
+// GetState 从调用状态检索一个值。
 //
-// Returns the value and true if the key exists, or nil and false otherwise.
+// 如果键存在则返回值和 true，否则返回 nil 和 false。
 //
-// Example:
+// 例子：
 //
 //	if startTime, ok := inv.GetState("agent:start_time"); ok {
 //	    duration := time.Since(startTime.(time.Time))
