@@ -7,7 +7,7 @@
 //
 //
 
-// Package agent provides the core agent functionality.
+// Package agent 提供了核心 agent 功能
 package agent
 
 import (
@@ -16,49 +16,51 @@ import (
 	"trpc.group/trpc-go/trpc-agent-go/model"
 )
 
-// ErrorTypeAgentCallbackError is used for errors from agent callbacks (before/after hooks).
+// ErrorTypeAgentCallbackError 是用于 agent 回调（before/after）中的错误类型。
 const ErrorTypeAgentCallbackError = "agent_callback_error"
 
-// BeforeAgentCallback is called before the agent runs.
-// Returns (customResponse, error).
-// - customResponse: if not nil, this response will be returned to user and agent execution will be skipped.
-// - error: if not nil, agent execution will be stopped with this error.
+// BeforeAgentCallback 是在 agent 运行之前调用的回调函数。
+// 返回 (customResponse, error)。
+// - customResponse：如果不为空，则此响应将被返回给用户，并且将跳过 agent 执行。
+// - error：如果不为空，则 agent 将停止运行并返回此错误。
 type BeforeAgentCallback func(ctx context.Context, invocation *Invocation) (*model.Response, error)
 
-// AfterAgentCallback is called after the agent runs.
-// Returns (customResponse, error).
-// - customResponse: if not nil, this response will be used instead of the actual agent response.
-// - error: if not nil, this error will be returned.
+// AfterAgentCallback 是在 agent 运行之后调用的回调函数。
+// 返回 (customResponse, error)。
+// - customResponse：如果不为空，则此响应将被用于实际的 agent 响应。
+// - error：如果不为空，则将返回此错误。
 type AfterAgentCallback func(ctx context.Context, invocation *Invocation, runErr error) (*model.Response, error)
 
-// Callbacks holds callbacks for agent operations.
+// Callbacks 用于 agent 操作的回调。
 type Callbacks struct {
 	// BeforeAgent is a list of callbacks that are called before the agent runs.
+	// BeforeAgent 是在 agent 运行之前调用的回调函数列表。
 	BeforeAgent []BeforeAgentCallback
 	// AfterAgent is a list of callbacks that are called after the agent runs.
+	// AfterAgent 是在 agent 运行之后调用的回调函数列表。
 	AfterAgent []AfterAgentCallback
 }
 
-// NewCallbacks creates a new Callbacks instance for agent.
+// NewCallbacks 创建一个用于 agent 的 Callbacks 实例。
 func NewCallbacks() *Callbacks {
 	return &Callbacks{}
 }
 
-// RegisterBeforeAgent registers a before agent callback.
+// RegisterBeforeAgent 注册一个 agent 运行前的回调函数。
 func (c *Callbacks) RegisterBeforeAgent(cb BeforeAgentCallback) *Callbacks {
 	c.BeforeAgent = append(c.BeforeAgent, cb)
 	return c
 }
 
-// RegisterAfterAgent registers an after agent callback.
+// RegisterAfterAgent 注册一个 agent 运行后的回调函数。
 func (c *Callbacks) RegisterAfterAgent(cb AfterAgentCallback) *Callbacks {
 	c.AfterAgent = append(c.AfterAgent, cb)
 	return c
 }
 
-// RunBeforeAgent runs all before agent callbacks in order.
-// Returns (customResponse, error).
-// If any callback returns a custom response, stop and return.
+// RunBeforeAgent 按顺序运行所有 agent 运行前的回调函数。
+// 返回 (customResponse, error)。
+// 如果任何回调返回自定义响应，则停止并返回。
 func (c *Callbacks) RunBeforeAgent(
 	ctx context.Context,
 	invocation *Invocation,
@@ -75,9 +77,9 @@ func (c *Callbacks) RunBeforeAgent(
 	return nil, nil
 }
 
-// RunAfterAgent runs all after agent callbacks in order.
-// Returns (customResponse, error).
-// If any callback returns a custom response, stop and return.
+// RunAfterAgent 按顺序运行所有 agent 运行后的回调函数。
+// 返回 (customResponse, error)。
+// 如果任何回调返回自定义响应，则停止并返回。
 func (c *Callbacks) RunAfterAgent(
 	ctx context.Context,
 	invocation *Invocation,

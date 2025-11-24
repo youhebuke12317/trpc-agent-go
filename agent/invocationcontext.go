@@ -13,26 +13,26 @@ import (
 	"context"
 )
 
-// InvocationContext carries the invocation information.
+// InvocationContext 携带调用信息
 type InvocationContext struct {
 	context.Context
 }
 type invocationKey struct{}
 
-// NewInvocationContext creates a new InvocationContext.
+// NewInvocationContext 创建一个新的 InvocationContext
 func NewInvocationContext(ctx context.Context, invocation *Invocation) *InvocationContext {
 	return &InvocationContext{
 		Context: context.WithValue(ctx, invocationKey{}, invocation),
 	}
 }
 
-// InvocationFromContext returns the invocation from the context.
+// InvocationFromContext 从上下文中返回调用信息
 func InvocationFromContext(ctx context.Context) (*Invocation, bool) {
 	invocation, ok := ctx.Value(invocationKey{}).(*Invocation)
 	return invocation, ok
 }
 
-// CheckContextCancelled check context cancelled
+// CheckContextCancelled 检查上下文是否被取消
 func CheckContextCancelled(ctx context.Context) error {
 	select {
 	case <-ctx.Done():

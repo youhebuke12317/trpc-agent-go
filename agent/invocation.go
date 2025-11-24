@@ -1,12 +1,8 @@
-//
 // Tencent is pleased to support the open source community by making trpc-agent-go available.
 //
 // Copyright (C) 2025 Tencent.  All rights reserved.
 //
 // trpc-agent-go is licensed under the Apache License Version 2.0.
-//
-//
-
 package agent
 
 import (
@@ -29,91 +25,121 @@ import (
 )
 
 const (
-	// WaitNoticeWithoutTimeout is the timeout duration for waiting without timeout
+	// WaitNoticeWithoutTimeout 是无超时等待时的超时时长
 	WaitNoticeWithoutTimeout = 0 * time.Second
 
-	// AppendEventNoticeKeyPrefix is the prefix for append event notice keys
+	// AppendEventNoticeKeyPrefix 是 Append Event Notice 键的前缀
 	AppendEventNoticeKeyPrefix = "append_event:"
 
 	// BranchDelimiter is the delimiter for branch
+	// BranchDelimiter 是分支的分隔符
 	BranchDelimiter = "/"
 
 	// EventFilterKeyDelimiter is the delimiter for event filter key
+	// EventFilterKeyDelimiter 是事件过滤器键的分隔符
 	EventFilterKeyDelimiter = "/"
 )
 
 // TransferInfo contains information about a pending agent transfer.
+// TransferInfo 包含关于待处理 agent 转移的信息。
 type TransferInfo struct {
 	// TargetAgentName is the name of the agent to transfer control to.
+	// TargetAgentName 是要转移控制权的 agent 名称。
 	TargetAgentName string
 	// Message is the message to send to the target agent.
+	// Message 是要发送给目标 agent 的消息。
 	Message string
 }
 
-// Invocation 代表流程执行的上下文。
+// Invocation represents the context for a flow execution.
+// Invocation 表示执行流的上下文。
 type Invocation struct {
-	// Agent 是正在被调用的代理。
+	// Agent is the agent that is being invoked.
+	// Agent 是正在调用的 agent。
 	Agent Agent
-	// AgentName 是正在被调用的代理的名称。
+	// AgentName is the name of the agent that is being invoked.
+	// AgentName 是正在调用的 agent 名称。
 	AgentName string
-	// InvocationID 是调用的ID。
+	// InvocationID is the ID of the invocation.
+	// InvocationID 是调用的 ID。
 	InvocationID string
-	// Branch 记录代理执行链信息。在多代理模式下，这对于追踪代理执行轨迹很有用。
+	// Branch records agent execution chain information.
+	// In multi-agent mode, this is useful for tracing agent execution trajectories.
+	// Branch 记录 agent 执行链信息。
+	// 在 multi-agent 模式下，这对于追踪 agent 执行轨迹非常有用。
 	Branch string
-	// EndInvocation 是一个标志，指示调用是否完成。
+	// EndInvocation is a flag that indicates if the invocation is complete.
+	// EndInvocation 是一个标志，表示调用是否完成。
 	EndInvocation bool
-	// Session 是用于调用的会话。
+	// Session is the session that is being used for the invocation.
+	// Session 是正在用于调用的会话。
 	Session *session.Session
-	// Model 是用于调用的模型。
+	// Model is the model that is being used for the invocation.
+	// Model 是正在用于调用的模型。
 	Model model.Model
-	// Message 是发送给代理的消息。
+	// Message is the message that is being sent to the agent.
+	// Message 是要发送给 agent 的消息。
 	Message model.Message
+	// RunOptions is the options for the Run method.
 	// RunOptions 是 Run 方法的选项。
 	RunOptions RunOptions
-	// TransferInfo 是关于待处理代理转移的信息。
+	// TransferInfo contains information about a pending agent transfer.
+	// TransferInfo 包含有关待处理 agent 转移的信息。
 	TransferInfo *TransferInfo
 
-	// StructuredOutput 定义模型应如何为此调用生成结构化输出。
+	// StructuredOutput defines how the model should produce structured output for this invocation.
+	// StructuredOutput 定义模型如何为该调用生成结构化输出。
 	StructuredOutput *model.StructuredOutput
-	// StructuredOutputType 是用于解包最终 JSON 的 Go 类型。
+	// StructuredOutputType is the Go type to unmarshal the final JSON into.
+	// StructuredOutputType 是将最终 JSON 解析为的 Go 类型。
 	StructuredOutputType reflect.Type
 
+	// MemoryService is the service for managing memory.
 	// MemoryService 是用于管理内存的服务。
 	MemoryService memory.Service
-	// ArtifactService 是用于管理工件的服务。
+	// ArtifactService is the service for managing artifacts.
+	// ArtifactService 是用于管理 artifact 的服务。
 	ArtifactService artifact.Service
 
-	// noticeChanMap 是用于在会话写入事件时发出信号的映射。
+	// noticeChanMap is used to signal when events are written to the session.
+	// noticeChanMap 用于在将事件写入会话时发出信号。
 	noticeChanMap map[string]chan any
 	noticeMu      *sync.Mutex
 
-	// eventFilterKey 用于过滤 flow 或 agent 的事件
+	// eventFilterKey is used to filter events for flow or agent
+	// eventFilterKey 用于过滤流或 agent 的事件。
 	eventFilterKey string
 
-	// parent 是父级调用（如果有）
+	// parent is the parent invocation, if any
+	// parent 是父调用，如果有
 	parent *Invocation
 
-	// state 存储调用范围的状态数据（延迟初始化）。
-	// 可由回调、中间件或任何调用范围的逻辑使用。
+	// state stores invocation-scoped state data (lazy initialized).
+	// Can be used by callbacks, middleware, or any invocation-scoped logic.
+	// state 存储调用范围的状态数据（惰性初始化）。可以由回调、中间件或任何调用范围逻辑使用。
 	state   map[string]any
 	stateMu sync.RWMutex
 }
 
 // DefaultWaitNoticeTimeoutErr is the default error returned when a wait notice times out.
+// DefaultWaitNoticeTimeoutErr 是等待通知超时时返回的默认错误。
 var DefaultWaitNoticeTimeoutErr = NewWaitNoticeTimeoutError("wait notice timeout.")
 
 // WaitNoticeTimeoutError represents an error that signals the wait notice timeout.
+// WaitNoticeTimeoutError 表示一个信号等待通知超时的错误。
 type WaitNoticeTimeoutError struct {
 	// Message contains the stop reason
 	Message string
 }
 
 // Error implements the error interface.
+// Error 实现了 error 接口。
 func (e *WaitNoticeTimeoutError) Error() string {
 	return e.Message
 }
 
 // AsWaitNoticeTimeoutError checks if an error is a AsWaitNoticeTimeoutError using errors.As.
+// AsWaitNoticeTimeoutError 使用 errors.As 检查是否为 AsWaitNoticeTimeoutError。
 func AsWaitNoticeTimeoutError(err error) (*WaitNoticeTimeoutError, bool) {
 	var waitNoticeTimeoutErr *WaitNoticeTimeoutError
 	ok := errors.As(err, &waitNoticeTimeoutErr)
@@ -121,14 +147,17 @@ func AsWaitNoticeTimeoutError(err error) (*WaitNoticeTimeoutError, bool) {
 }
 
 // NewWaitNoticeTimeoutError creates a new AsWaitNoticeTimeoutError with the given message.
+// NewWaitNoticeTimeoutError 创建一个带有给定消息的 AsWaitNoticeTimeoutError。
 func NewWaitNoticeTimeoutError(message string) *WaitNoticeTimeoutError {
 	return &WaitNoticeTimeoutError{Message: message}
 }
 
 // RunOption is a function that configures a RunOptions.
+// RunOption 是用于配置 RunOptions 的函数。
 type RunOption func(*RunOptions)
 
 // WithRuntimeState sets the runtime state for the RunOptions.
+// WithRuntimeState 设置 RunOptions 的运行时状态。
 func WithRuntimeState(state map[string]any) RunOption {
 	return func(opts *RunOptions) {
 		opts.RuntimeState = state
@@ -136,6 +165,7 @@ func WithRuntimeState(state map[string]any) RunOption {
 }
 
 // WithKnowledgeFilter sets the metadata filter for the RunOptions.
+// WithKnowledgeFilter 设置 RunOptions 的元数据过滤器。
 func WithKnowledgeFilter(filter map[string]any) RunOption {
 	return func(opts *RunOptions) {
 		opts.KnowledgeFilter = filter
@@ -143,6 +173,7 @@ func WithKnowledgeFilter(filter map[string]any) RunOption {
 }
 
 // WithKnowledgeConditionedFilter sets the complex condition filter for the RunOptions.
+// WithKnowledgeConditionedFilter 设置复杂条件过滤器。
 func WithKnowledgeConditionedFilter(filter *searchfilter.UniversalFilterCondition) RunOption {
 	return func(opts *RunOptions) {
 		opts.KnowledgeConditionedFilter = filter

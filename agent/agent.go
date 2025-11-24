@@ -7,7 +7,7 @@
 //
 //
 
-// Package agent provides the core agent functionality.
+// Package agent 提供了核心代理功能
 package agent
 
 import (
@@ -19,71 +19,65 @@ import (
 	"trpc.group/trpc-go/trpc-agent-go/tool"
 )
 
-// Info contains basic information about an agent.
+// Info 包含的 agent 基本信息
 type Info struct {
-	// Name is the name of the agent.
+	// Name 是 agent 的名称
 	Name string
-	// Description is the description of the agent.
+	// Description 是 agent 的描述
 	Description string
-	// InputSchema is the input schema of the agent.
+	// InputSchema 是 agent 的输入协议
 	InputSchema map[string]any
-	// OutputSchema is the output schema of the agent.
+	// OutputSchema 是 agent 的输出协议
 	OutputSchema map[string]any
 }
 
-// ErrorTypeStopAgentError is the error type used to indicate that an agent should stop execution.
+// ErrorTypeStopAgentError 用于表示应该停止执行
 const ErrorTypeStopAgentError = "stop_agent_error"
 
-// StopError represents an error that signals the agent execution should be stopped.
-// When this error type is returned, it indicates the agent should stop processing.
+// StopError 表示一个错误，提示 agent 执行应停止. 当此错误类型返回时，表示 agent 应停止处理。
 type StopError struct {
-	// Message contains the stop reason
+	// Message 包含停止原因
 	Message string
 }
 
-// Error implements the error interface.
+// Error 实现了 error 接口
 func (e *StopError) Error() string {
 	return e.Message
 }
 
-// AsStopError checks if an error is a StopError using errors.As.
+// AsStopError  通过 errors.As 检查错误是否为 StopError.
 func AsStopError(err error) (*StopError, bool) {
 	var stopErr *StopError
 	ok := errors.As(err, &stopErr)
 	return stopErr, ok
 }
 
-// NewStopError creates a new StopError with the given message.
+// NewStopError 创建一个 StopError 实例，包含指定的消息
 func NewStopError(message string) *StopError {
 	return &StopError{Message: message}
 }
 
-// Agent is the interface that all agents must implement.
+// Agent 是所有 agent 都必须实现的接口. 定义了 agent 的基本接口，包括执行和工具方法
 type Agent interface {
-	// Run executes the provided invocation within the given context and returns
-	// a channel of events that represent the progress and results of the execution.
+	// Run 在给定上下文中执行所提供的调用，并返回一个代表执行进度和结果的事件通道.
 	Run(ctx context.Context, invocation *Invocation) (<-chan *event.Event, error)
 
-	// Tools returns the list of tools that this agent has access to and can execute.
-	// These tools represent the capabilities available to the agent during invocations.
+	// Tools 返回该 agent 可访问并可执行的工具列表。这些工具代表 agent 在调用时可用的能力
 	Tools() []tool.Tool
 
-	// Info returns the basic information about this agent.
+	// Info 返回关于此 agent 的基本信息
 	Info() Info
 
-	// SubAgents returns the list of sub-agents available to this agent.
-	// Returns empty slice if no sub-agents are available.
+	// SubAgents 返回此 agent 可用的 sub-agent 列表。如果没有可用的 sub-agent，则返回空切片。
 	SubAgents() []Agent
 
-	// FindSubAgent finds a sub-agent by name.
-	// Returns nil if no sub-agent with the given name is found.
+	// FindSubAgent 通过名称查找 sub-agent。如果找不到具有给定名称的 sub-agent，则返回 nil。
 	FindSubAgent(name string) Agent
 }
 
-// CodeExecutor may move to Agent interface, will cause large scale change, consider later.
-// or move to codeexecutor package
+// CodeExecutor 用于执行代码块. 可能会迁移到 Agent 接口，
+// 这将引发大规模变化，稍后再考虑。或迁移到 codeexecutor 包
 type CodeExecutor interface {
-	// CodeExecutor returns the code executor used by this agent.
-	// This allows the agent to execute code blocks in different environments.
+	// CodeExecutor 返回此 agent 使用的代码执行器。这允许 agent 在不同的环境中执行代码块。
 	CodeExecutor() codeexecutor.CodeExecutor
 }

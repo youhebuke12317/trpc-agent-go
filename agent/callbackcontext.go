@@ -18,18 +18,17 @@ import (
 	"trpc.group/trpc-go/trpc-agent-go/session"
 )
 
-// CallbackContext provides a typed wrapper around context with agent-specific operations.
-// Similar to ADK Python's callback_context, this provides access to session-scoped operations
-// like artifact management.
+// CallbackContext 提供一个类型化的包装器，用于上下文与 agent 特定的操作。
+// 与 ADK Python 的 callback_context 类似，它提供了会话范围的运行时操作，例如管理 artifact。
 type CallbackContext struct {
 	context.Context
 	invocation *Invocation
-	// State is the delta-aware state of the current session.
+	// State 是当前会话的增量感知状态。
 	State session.StateMap
 }
 
-// NewCallbackContext creates a CallbackContext from a standard context.
-// Returns an error if no invocation is found in the context.
+// NewCallbackContext 从标准上下文中创建一个 CallbackContext。
+// 如果上下文中没有找到调用，则返回错误。
 func NewCallbackContext(ctx context.Context) (*CallbackContext, error) {
 	invocation, ok := InvocationFromContext(ctx)
 	if !ok || invocation == nil {
@@ -46,14 +45,14 @@ func NewCallbackContext(ctx context.Context) (*CallbackContext, error) {
 	}, nil
 }
 
-// SaveArtifact saves an artifact and records it for the current session.
+// SaveArtifact 保存一个 artifact 并记录当前会话
 //
 // Args:
-//   - filename: The filename of the artifact
-//   - artifact: The artifact to save
+//   - filename: artifact 的文件名
+//   - artifact: 要保存的 artifact
 //
 // Returns:
-//   - The version of the artifact
+//   - artifact 的版本
 func (cc *CallbackContext) SaveArtifact(filename string, artifact *artifact.Artifact) (int, error) {
 	service, sessionInfo, err := cc.getArtifactServiceAndSessionInfo()
 	if err != nil {
@@ -62,14 +61,14 @@ func (cc *CallbackContext) SaveArtifact(filename string, artifact *artifact.Arti
 	return service.SaveArtifact(cc.Context, sessionInfo, filename, artifact)
 }
 
-// LoadArtifact loads an artifact attached to the current session.
+// LoadArtifact 加载当前会话附加的 artifact。
 //
 // Args:
-//   - filename: The filename of the artifact
-//   - version: The version of the artifact. If nil, the latest version will be returned.
+//   - filename: artifact 的文件名
+//   - version: artifact 的版本。如果为 nil，则返回最新版本。
 //
 // Returns:
-//   - The artifact, or nil if not found
+//   - artifact，如果未找到则返回 nil
 func (cc *CallbackContext) LoadArtifact(filename string, version *int) (*artifact.Artifact, error) {
 	service, sessionInfo, err := cc.getArtifactServiceAndSessionInfo()
 	if err != nil {
@@ -78,10 +77,10 @@ func (cc *CallbackContext) LoadArtifact(filename string, version *int) (*artifac
 	return service.LoadArtifact(cc.Context, sessionInfo, filename, version)
 }
 
-// ListArtifacts lists the filenames of the artifacts attached to the current session.
+// ListArtifacts 列出当前会话附加的 artifact 的文件名。
 //
 // Returns:
-//   - A list of artifact filenames
+//   - artifact 的文件名列表
 func (cc *CallbackContext) ListArtifacts() ([]string, error) {
 	service, sessionInfo, err := cc.getArtifactServiceAndSessionInfo()
 	if err != nil {
@@ -90,13 +89,9 @@ func (cc *CallbackContext) ListArtifacts() ([]string, error) {
 	return service.ListArtifactKeys(cc.Context, sessionInfo)
 }
 
-// DeleteArtifact deletes an artifact from the current session.
-//
+// DeleteArtifact 从当前会话中删除一个 artifact。
 // Args:
-//   - filename: The filename of the artifact to delete
-//
-// Returns:
-//   - An error if the operation fails
+//   - filename: 要删除的 artifact 的文件名
 func (cc *CallbackContext) DeleteArtifact(filename string) error {
 	service, sessionInfo, err := cc.getArtifactServiceAndSessionInfo()
 	if err != nil {
@@ -105,13 +100,13 @@ func (cc *CallbackContext) DeleteArtifact(filename string) error {
 	return service.DeleteArtifact(cc.Context, sessionInfo, filename)
 }
 
-// ListArtifactVersions lists all versions of an artifact.
+// ListArtifactVersions 列出 artifact 的所有版本。
 //
 // Args:
-//   - filename: The filename of the artifact
+//   - filename: artifact 的文件名
 //
 // Returns:
-//   - A list of all available versions of the artifact
+//   - artifact 的所有版本列表
 func (cc *CallbackContext) ListArtifactVersions(filename string) ([]int, error) {
 	service, sessionInfo, err := cc.getArtifactServiceAndSessionInfo()
 	if err != nil {
@@ -120,7 +115,7 @@ func (cc *CallbackContext) ListArtifactVersions(filename string) ([]int, error) 
 	return service.ListVersions(cc.Context, sessionInfo, filename)
 }
 
-// getArtifactServiceAndSessionInfo extracts common logic for getting artifact service and session information.
+// getArtifactServiceAndSessionInfo 获取 artifact service 和 session 的通用逻辑
 func (cc *CallbackContext) getArtifactServiceAndSessionInfo() (s artifact.Service, sessionInfo artifact.SessionInfo, err error) {
 	service := cc.invocation.ArtifactService
 	if service == nil {
@@ -141,19 +136,19 @@ func (cc *CallbackContext) getArtifactServiceAndSessionInfo() (s artifact.Servic
 	return service, sessionInfo, nil
 }
 
-// appUserSession extracts app name, user ID, and session ID from the invocation.
+// appUserSession 从 Invocation 中提取 app 名称、用户 ID 和会话 ID
 func (cc *CallbackContext) appUserSession() (appName, userID, sessionID string, err error) {
-	// Try to get from session.
+	// 尝试从 session 中获取
 	if cc.invocation.Session == nil {
 		return "", "", "", errors.New("invocation exists but no session available")
 	}
 
-	// Session has AppName and UserID fields.
+	// session 中有 AppName 和 UserID 字段
 	if cc.invocation.Session.AppName != "" && cc.invocation.Session.UserID != "" && cc.invocation.Session.ID != "" {
 		return cc.invocation.Session.AppName, cc.invocation.Session.UserID, cc.invocation.Session.ID, nil
 	}
 
-	// Return error if session exists but missing required fields.
+	// 如果 session 存在但缺少所需的字段，则返回错误
 	return "", "", "", fmt.Errorf("session exists but missing appName or userID or sessionID: appName=%s, userID=%s, sessionID=%s",
 		cc.invocation.Session.AppName, cc.invocation.Session.UserID, cc.invocation.Session.ID)
 }

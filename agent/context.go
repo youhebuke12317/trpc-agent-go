@@ -7,8 +7,8 @@
 //
 //
 
-// Package agent provides the core agent functionality.
+// Package agent 提供了核心代理功能
 package agent
 
-// ErrorTypeAgentContextCancelledError is the error type for context cancelled error.
+// ErrorTypeAgentContextCancelledError 是上下文取消错误的错误类型
 const ErrorTypeAgentContextCancelledError = "agent_context_cancelled_error"

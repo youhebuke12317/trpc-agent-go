@@ -13,13 +13,13 @@ import (
 	"context"
 )
 
-// ToolContext is a context for tool calls.
+// ToolContext 是用于工具调用的上下文
 type ToolContext struct {
-	// CallbackContext is the context for callback.
+	// CallbackContext 回调上下文是回调的上下文。
 	*CallbackContext
 }
 
-// NewToolContext creates a new ToolContext from the given context.
+// NewToolContext 从给定的上下文中创建一个新的 ToolContext。
 func NewToolContext(ctx context.Context) (*ToolContext, error) {
 	cbCtx, err := NewCallbackContext(ctx)
 	if err != nil {
